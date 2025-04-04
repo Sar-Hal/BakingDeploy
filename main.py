@@ -8,6 +8,7 @@ import re
 from fractions import Fraction
 import json
 import uvicorn
+from fastapi import FastAPI, Query
 
 # Load environment variables
 load_dotenv()
@@ -24,6 +25,13 @@ genai.configure(api_key=GEMINI_API_KEY)
 gemini = genai.GenerativeModel("gemini-2.0-flash")
 
 app = FastAPI()
+@app.get("/convert")
+async def convert_get(
+    recipe: str = Query(..., example="- 1 cup flour\n- 2 tbsp oil")
+):
+    ingredients = extract_ingredients(recipe)
+    result = convert_with_gemini(ingredients)
+    return {"data": result}
 
 class RecipeRequest(BaseModel):
     text: str
@@ -153,6 +161,7 @@ async def convert_recipe(request: RecipeRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/")
 async def health_check():
